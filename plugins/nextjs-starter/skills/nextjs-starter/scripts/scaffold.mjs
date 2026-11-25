@@ -141,11 +141,13 @@ if (!flags.has("install")) {
   } catch {
     fail("npm install failed. Fix the error above, then run `npm install` inside the project.")
   }
-  // Re-format files touched by placeholder/example replacement.
-  try {
-    execSync("npx prettier --write . --log-level warn", { cwd: targetDir, stdio: "inherit" })
-  } catch {
-    console.warn("⚠ Prettier formatting skipped.")
+  // Re-format files touched by placeholder/example replacement. Websites ship without Prettier.
+  if (type === "application") {
+    try {
+      execSync("npx prettier --write . --log-level warn", { cwd: targetDir, stdio: "inherit" })
+    } catch {
+      console.warn("⚠ Prettier formatting skipped.")
+    }
   }
 }
 

@@ -98,7 +98,7 @@ Open http://localhost:3000. The application component gallery is at http://local
 | `npm run dev` | Start the dev server |
 | `npm run build` / `npm start` | Production build / serve it |
 | `npm run lint` / `lint:fix` | ESLint |
-| `npm run format` / `format:check` | Prettier |
+| `npm run format` / `format:check` | Prettier (application only) |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm test` | Vitest (application) or Node test runner (website) |
 | `npm run test:watch` | Vitest watch mode (application only) |

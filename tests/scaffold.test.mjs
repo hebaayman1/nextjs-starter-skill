@@ -37,6 +37,10 @@ test("website scaffold uses the marketing structure and selected libraries", () 
     assert.ok(!pkg.dependencies["embla-carousel-react"])
     assert.equal(readFileSync(join(target, "AGENTS.md"), "utf8"), readFileSync(join(target, "CLAUDE.md"), "utf8"))
     assert.match(readFileSync(join(target, ".env.example"), "utf8"), /https:\/\/acme\.example/)
+    assert.ok(pkg.scripts["lint:fix"])
+    const gitignore = readFileSync(join(target, ".gitignore"), "utf8")
+    for (const entry of ["next-env.d.ts", "*.tsbuildinfo", ".env*"]) assert.ok(gitignore.includes(entry), entry)
+    assert.ok(!gitignore.includes("design-system.md"))
   } finally {
     cleanup()
   }
