@@ -1,7 +1,7 @@
 {
   "name": "nextjs-starter",
   "description": "Scaffold Next.js 16 applications and marketing websites with reusable architecture and selectable libraries.",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "author": { "name": "hebaayman1" },
   "keywords": ["nextjs", "react", "tailwind", "react-query", "axios", "scaffold", "starter"]
 }

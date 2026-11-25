@@ -25,8 +25,9 @@ A skill for Claude Code and Codex with two Next.js 16 starter options: **applica
 
 - Thin routes in `src/app`; page sections and static copy in `src/components/pages/<name>-page/`.
 - Shared layout, UI, and icons in `src/components/`, exported through its barrel.
+- One `src/config/site.ts` for the site name, description, and page list; header, metadata, sitemap, and `llms.txt` read from it.
 - Light and dark design tokens in `src/app/globals.css`; asset folders for local fonts and page images.
-- `robots.ts`, `sitemap.ts`, and `llms.txt`; external CMS, careers, and forms live in `src/services/` when needed.
+- SEO from day one: `metadataBase`, Open Graph and Twitter defaults, a generated social image, favicon, `robots.ts`, `sitemap.ts`, and `llms.txt`; external CMS, careers, and forms live in `src/services/` when needed.
 - Optional GSAP, Three.js, Embla, Axios, and HTML sanitizing only after the user confirms the needed libraries.
 
 ## Install (Claude Code)
@@ -75,8 +76,8 @@ node plugins/nextjs-starter/skills/nextjs-starter/scripts/scaffold.mjs my-site -
 | `--type application\|website` | `application` | Choose a product app or marketing website. |
 | `--name "<text>"` | folder name in Title Case | Display name of the app. |
 | `--description "<text>"` | `<name> web app` | Description used in the README and metadata. |
-| `--api-url <url>` | `https://jsonplaceholder.typicode.com` | Application only; written to `.env.local` as `NEXT_PUBLIC_API_BASE_URL`. |
-| `--site-url <url>` | `https://example.com` | Website only; used by sitemap and robots. Set the real origin before launch. |
+| `--api-url <url>` | `https://jsonplaceholder.typicode.com` | Application only; must be an http(s) URL. Written to `.env.local` as `NEXT_PUBLIC_API_BASE_URL`. |
+| `--site-url <url>` | `https://example.com` | Website only; must be an http(s) URL. Written to `.env.local` as `NEXT_PUBLIC_SITE_URL` for metadata, sitemap, and robots. Set the real origin before launch. |
 | `--libraries <list>` | none | Website only; comma-separated: `gsap`, `three`, `embla-carousel-react`, `axios`, `isomorphic-dompurify`. |
 | `--no-example` | | Application only; leave out the example `posts` feature. |
 | `--no-install` | | Skip `npm install`. |
@@ -100,8 +101,7 @@ Open http://localhost:3000. The application component gallery is at http://local
 | `npm run lint` / `lint:fix` | ESLint |
 | `npm run format` / `format:check` | Prettier (application only) |
 | `npm run typecheck` | `tsc --noEmit` |
-| `npm test` | Vitest (application) or Node test runner (website) |
-| `npm run test:watch` | Vitest watch mode (application only) |
+| `npm test` / `test:watch` | Vitest |
 
 ## Repository layout
 

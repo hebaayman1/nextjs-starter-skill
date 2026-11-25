@@ -20,11 +20,12 @@ const templates = {
 }
 const websiteLibraries = {
   gsap: { version: "^3.13.0" },
-  three: { version: "^0.180.0", types: "^0.180.0" },
+  three: { version: "^0.180.0", devDependencies: { "@types/three": "^0.180.0" } },
   "embla-carousel-react": { version: "^8.6.0" },
   axios: { version: "^1.21.1" },
-  "isomorphic-dompurify": { version: "2.26.0" },
+  "isomorphic-dompurify": { version: "^2.26.0" },
 }
+const profileOnly = { "api-url": "application", "site-url": "website", libraries: "website" }
 
 function fail(message) {
   console.error(`\n✖ ${message}\n`)
@@ -51,8 +52,18 @@ const type = options.type ?? "application"
 if (!Object.hasOwn(templates, type)) fail(`Unknown type "${type}". Choose application or website.`)
 const templateDir = templates[type]
 if (type === "website" && flags.has("example")) fail("--no-example is available only for applications.")
+for (const [option, profile] of Object.entries(profileOnly)) {
+  if (options[option] !== undefined && type !== profile) fail(`--${option} is available only for ${profile}s.`)
+}
+for (const option of ["api-url", "site-url"]) {
+  if (options[option] === undefined) continue
+  let url
+  try {
+    url = new URL(options[option])
+  } catch {}
+  if (!url || !["http:", "https:"].includes(url.protocol)) fail(`--${option} must be an http(s) URL (got "${options[option]}").`)
+}
 const selectedLibraries = options.libraries ? options.libraries.split(",").map((name) => name.trim()).filter(Boolean) : []
-if (type === "application" && selectedLibraries.length) fail("--libraries is available only for websites.")
 for (const library of selectedLibraries) {
   if (!Object.hasOwn(websiteLibraries, library)) fail(`Unknown website library "${library}".`)
 }
@@ -120,9 +131,9 @@ if (type === "website") {
   const packagePath = join(targetDir, "package.json")
   const pkg = JSON.parse(readFileSync(packagePath, "utf8"))
   for (const library of selectedLibraries) {
-    const { version, types } = websiteLibraries[library]
+    const { version, devDependencies = {} } = websiteLibraries[library]
     pkg.dependencies[library] = version
-    if (types) pkg.devDependencies["@types/three"] = types
+    Object.assign(pkg.devDependencies, devDependencies)
   }
   writeFileSync(packagePath, `${JSON.stringify(pkg, null, 2)}\n`)
 }
@@ -167,6 +178,5 @@ console.log(`
   cd ${target}
   npm run dev        → http://localhost:3000
 ${type === "application" ? "                       http://localhost:3000/design-system (gallery)\n" : ""}
-
 Architecture rules: ${join(target, "AGENTS.md")} (Codex), ${join(target, "CLAUDE.md")} (Claude Code)
 ${keepExample ? "Example feature:    src/features/posts (delete it when you add real features)\n" : ""}`)

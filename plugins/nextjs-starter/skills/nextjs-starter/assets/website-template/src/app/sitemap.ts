@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next"
-import { siteUrl } from "@/components/pages/shared/site-url.mjs"
+import { site } from "@/config/site"
+import { siteUrl } from "@/lib/site-url"
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  return ["/", "/about"].map((path) => ({ url: siteUrl(path) }))
+  return site.pages.map(({ href }) => ({ url: siteUrl(href) }))
 }
