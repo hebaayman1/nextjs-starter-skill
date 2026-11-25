@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 /**
- * Scaffold a Next.js project from ../assets/template.
+ * Scaffold a Next.js application or website.
  *
  * Usage:
  *   node scaffold.mjs <target-dir> [--name "App Name"] [--description "..."]
- *        [--api-url https://api.example.com] [--no-example] [--no-install] [--no-git]
+ *        [--type application|website] [--api-url https://api.example.com]
+ *        [--site-url https://example.com] [--libraries gsap,three]
+ *        [--no-example] [--no-install] [--no-git]
  */
 import { execSync } from "node:child_process"
 import { cpSync, existsSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs"
@@ -12,7 +14,17 @@ import { basename, dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
 const here = dirname(fileURLToPath(import.meta.url))
-const templateDir = resolve(here, "../assets/template")
+const templates = {
+  application: resolve(here, "../assets/template"),
+  website: resolve(here, "../assets/website-template"),
+}
+const websiteLibraries = {
+  gsap: { version: "^3.13.0" },
+  three: { version: "^0.180.0", types: "^0.180.0" },
+  "embla-carousel-react": { version: "^8.6.0" },
+  axios: { version: "^1.21.1" },
+  "isomorphic-dompurify": { version: "2.26.0" },
+}
 
 function fail(message) {
   console.error(`\n✖ ${message}\n`)
@@ -35,6 +47,15 @@ for (let i = 0; i < args.length; i++) {
 
 const target = positional[0]
 if (!target) fail("Missing target directory. Example: node scaffold.mjs my-app --name \"My App\"")
+const type = options.type ?? "application"
+if (!Object.hasOwn(templates, type)) fail(`Unknown type "${type}". Choose application or website.`)
+const templateDir = templates[type]
+if (type === "website" && flags.has("example")) fail("--no-example is available only for applications.")
+const selectedLibraries = options.libraries ? options.libraries.split(",").map((name) => name.trim()).filter(Boolean) : []
+if (type === "application" && selectedLibraries.length) fail("--libraries is available only for websites.")
+for (const library of selectedLibraries) {
+  if (!Object.hasOwn(websiteLibraries, library)) fail(`Unknown website library "${library}".`)
+}
 
 const [major, minor] = process.versions.node.split(".").map(Number)
 if (major < 20 || (major === 20 && minor < 9)) fail(`Node.js 20.9+ is required (found ${process.versions.node}).`)
@@ -59,6 +80,7 @@ const replacements = {
   "%%PACKAGE_NAME%%": packageName,
   "%%APP_DESCRIPTION%%": options.description ?? `${appName} web app`,
   "%%API_BASE_URL%%": options["api-url"] ?? "https://jsonplaceholder.typicode.com",
+  "%%SITE_URL%%": options["site-url"] ?? "https://example.com",
 }
 
 // ---------- copy ----------
@@ -67,8 +89,8 @@ cpSync(templateDir, targetDir, { recursive: true })
 renameSync(join(targetDir, "_gitignore"), join(targetDir, ".gitignore"))
 
 // ---------- example feature ----------
-const keepExample = !flags.has("example")
-if (!keepExample) {
+const keepExample = type === "application" && !flags.has("example")
+if (type === "application" && !keepExample) {
   rmSync(join(targetDir, "src/features/posts"), { recursive: true, force: true })
   rmSync(join(targetDir, "src/app/(app)/posts"), { recursive: true, force: true })
   writeFileSync(join(targetDir, "src/features/.gitkeep"), "")
@@ -93,6 +115,17 @@ function walk(dir) {
   }
 }
 walk(targetDir)
+
+if (type === "website") {
+  const packagePath = join(targetDir, "package.json")
+  const pkg = JSON.parse(readFileSync(packagePath, "utf8"))
+  for (const library of selectedLibraries) {
+    const { version, types } = websiteLibraries[library]
+    pkg.dependencies[library] = version
+    if (types) pkg.devDependencies["@types/three"] = types
+  }
+  writeFileSync(packagePath, `${JSON.stringify(pkg, null, 2)}\n`)
+}
 
 // Both agents read the same architecture rules without maintaining two template files.
 writeFileSync(join(targetDir, "AGENTS.md"), readFileSync(join(targetDir, "CLAUDE.md"), "utf8"))
@@ -131,7 +164,7 @@ console.log(`
 
   cd ${target}
   npm run dev        → http://localhost:3000
-                       http://localhost:3000/design-system (gallery)
+${type === "application" ? "                       http://localhost:3000/design-system (gallery)\n" : ""}
 
 Architecture rules: ${join(target, "AGENTS.md")} (Codex), ${join(target, "CLAUDE.md")} (Claude Code)
 ${keepExample ? "Example feature:    src/features/posts (delete it when you add real features)\n" : ""}`)

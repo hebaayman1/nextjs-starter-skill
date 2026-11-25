@@ -5,7 +5,7 @@
     {
       "name": "nextjs-starter",
       "source": "./plugins/nextjs-starter",
-      "description": "Scaffold Next.js 16 apps with Tailwind v4 tokens, Axios, TanStack Query, Zod and a layered feature architecture."
+      "description": "Scaffold Next.js 16 applications and marketing websites with reusable architecture and selectable libraries."
     }
   ]
 }

@@ -1,12 +1,17 @@
 # nextjs-starter-skill
 
-A skill for Claude Code and Codex that scaffolds Next.js apps with a fixed stack and architecture, and keeps agents following that architecture when they add features later. It is also packaged as a Claude Code plugin.
+A skill for Claude Code and Codex with two Next.js 16 starter options: **application** and **website**. It is also packaged as a Claude Code plugin.
 
 ## What you get
 
-**Stack:** Next.js 16 App Router · React 19 + React Compiler · TypeScript strict · Tailwind CSS v4 design tokens · Base UI · cva + cn · Axios · TanStack Query v5 · Zod · TanStack Table · Recharts · Vitest + Testing Library · ESLint + Prettier
+**Shared stack:** Next.js 16 App Router · React 19 + React Compiler · TypeScript strict · Tailwind CSS v4 design tokens.
 
-**Architecture:**
+| Option | Use for | Structure and libraries |
+| --- | --- | --- |
+| `application` (default) | Dashboards, portals, product apps | Feature folders, thin routes, Base UI, cva + cn, Axios, TanStack Query, Zod, TanStack Table, Recharts, Vitest, component gallery. |
+| `website` | Marketing, company, portfolio, editorial sites | Page sections under `components/pages`, shared layout and UI, SEO routes, static content, optional external services. |
+
+**Application architecture:**
 
 - Thin routes in `src/app`; business domains in `src/features/<name>/{api,hooks,schemas,components}`.
 - Data flow: `api.ts` (Axios + Zod) → `hooks.ts` (query-key factory + React Query) → `components/` → `page.tsx`.
@@ -16,6 +21,14 @@ A skill for Claude Code and Codex that scaffolds Next.js apps with a fixed stack
 - Matching `AGENTS.md` and `CLAUDE.md` files in every generated project, so Codex and Claude Code follow the same architecture rules in later sessions.
 - An optional example `posts` feature that shows the full data flow end to end.
 
+**Website architecture:**
+
+- Thin routes in `src/app`; page sections and static copy in `src/components/pages/<name>-page/`.
+- Shared layout, UI, and icons in `src/components/`, exported through its barrel.
+- Light and dark design tokens in `src/app/globals.css`; asset folders for local fonts and page images.
+- `robots.ts`, `sitemap.ts`, and `llms.txt`; external CMS, careers, and forms live in `src/services/` when needed.
+- Optional GSAP, Three.js, Embla, Axios, and HTML sanitizing only after the user confirms the needed libraries.
+
 ## Install (Claude Code)
 
 ```
@@ -23,7 +36,7 @@ A skill for Claude Code and Codex that scaffolds Next.js apps with a fixed stack
 /plugin install nextjs-starter@nextjs-starter-skill
 ```
 
-Then ask Claude something like *"Create a new Next.js app called sales-portal"*. Claude asks for anything missing (display name, API URL, whether to keep the example feature), runs the generator, and checks that the project lints, type-checks, tests and builds.
+Then ask Claude for an application or website. For websites, the skill asks which optional libraries and external services you need before scaffolding.
 
 The skill also activates when you add a feature, page, API call or component inside a generated project.
 
@@ -45,23 +58,27 @@ New-Item -ItemType Directory -Force "$HOME\.agents\skills" | Out-Null
 Copy-Item plugins/nextjs-starter/skills/nextjs-starter -Destination "$HOME\.agents\skills" -Recurse
 ```
 
-Start a new Codex session and ask it to use `$nextjs-starter` to create a Next.js app. The generated `AGENTS.md` gives Codex the architecture rules for later work. To update the installed skill, replace the copied `nextjs-starter` directory with the latest version from this repository.
+Start a new Codex session and ask it to use `$nextjs-starter` to create an application or website. For websites, Codex asks which optional libraries you want before scaffolding. The generated `AGENTS.md` gives Codex the architecture rules for later work. To update the installed skill, replace the copied `nextjs-starter` directory with the latest version from this repository.
 
 ## Use the generator directly
 
 Requires Node.js 20.9+ and npm.
 
 ```bash
-node plugins/nextjs-starter/skills/nextjs-starter/scripts/scaffold.mjs my-app --name "My App"
+node plugins/nextjs-starter/skills/nextjs-starter/scripts/scaffold.mjs my-app --type application --name "My App"
+node plugins/nextjs-starter/skills/nextjs-starter/scripts/scaffold.mjs my-site --type website --name "My Site" --site-url https://example.com --libraries gsap,embla-carousel-react
 ```
 
 | Option | Default | Description |
 | --- | --- | --- |
 | `<target-dir>` | required | Folder to create. Must not exist or must be empty. |
+| `--type application\|website` | `application` | Choose a product app or marketing website. |
 | `--name "<text>"` | folder name in Title Case | Display name of the app. |
 | `--description "<text>"` | `<name> web app` | Description used in the README and metadata. |
-| `--api-url <url>` | `https://jsonplaceholder.typicode.com` | Written to `.env.local` as `NEXT_PUBLIC_API_BASE_URL`. |
-| `--no-example` | | Leave out the example `posts` feature. |
+| `--api-url <url>` | `https://jsonplaceholder.typicode.com` | Application only; written to `.env.local` as `NEXT_PUBLIC_API_BASE_URL`. |
+| `--site-url <url>` | `https://example.com` | Website only; used by sitemap and robots. Set the real origin before launch. |
+| `--libraries <list>` | none | Website only; comma-separated: `gsap`, `three`, `embla-carousel-react`, `axios`, `isomorphic-dompurify`. |
+| `--no-example` | | Application only; leave out the example `posts` feature. |
 | `--no-install` | | Skip `npm install`. |
 | `--no-git` | | Skip `git init` and the initial commit. |
 
@@ -72,7 +89,7 @@ cd my-app
 npm run dev
 ```
 
-Open http://localhost:3000. The component gallery is at http://localhost:3000/design-system (development only).
+Open http://localhost:3000. The application component gallery is at http://localhost:3000/design-system (development only).
 
 ### Scripts in a generated project
 
@@ -83,7 +100,8 @@ Open http://localhost:3000. The component gallery is at http://localhost:3000/de
 | `npm run lint` / `lint:fix` | ESLint |
 | `npm run format` / `format:check` | Prettier |
 | `npm run typecheck` | `tsc --noEmit` |
-| `npm test` / `test:watch` | Vitest |
+| `npm test` | Vitest (application) or Node test runner (website) |
+| `npm run test:watch` | Vitest watch mode (application only) |
 
 ## Repository layout
 
@@ -94,17 +112,18 @@ plugins/nextjs-starter/
   skills/nextjs-starter/
     SKILL.md                               # instructions for Claude Code and Codex
     scripts/scaffold.mjs                   # the generator
-    assets/template/                       # files copied into every new project
+    assets/template/                       # application template
+    assets/website-template/               # website template
 ```
 
 ## Contributing to the template
 
-1. Edit files under `plugins/nextjs-starter/skills/nextjs-starter/assets/template/`, not a generated project.
+1. Edit the relevant template under `plugins/nextjs-starter/skills/nextjs-starter/assets/`, not a generated project.
 2. Bump `version` in `plugins/nextjs-starter/.claude-plugin/plugin.json`.
 3. Generate a throwaway project and check that it passes:
 
    ```bash
-   node plugins/nextjs-starter/skills/nextjs-starter/scripts/scaffold.mjs /tmp/check-app --no-git
-   cd /tmp/check-app
-   npm run lint && npm run typecheck && npm test && npm run build
+   node --test tests/scaffold.test.mjs
+   node plugins/nextjs-starter/skills/nextjs-starter/scripts/scaffold.mjs /tmp/check-site --type website --no-git
+   cd /tmp/check-site && npm run lint && npm run typecheck && npm test && npm run build
    ```
