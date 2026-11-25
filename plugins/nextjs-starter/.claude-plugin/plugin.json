@@ -1,0 +1,7 @@
+{
+  "name": "nextjs-starter",
+  "description": "Scaffold Next.js 16 apps with Tailwind v4 tokens, Axios, TanStack Query, Zod and a layered feature architecture.",
+  "version": "1.0.0",
+  "author": { "name": "hebaayman1" },
+  "keywords": ["nextjs", "react", "tailwind", "react-query", "axios", "scaffold", "starter"]
+}

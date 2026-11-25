@@ -1,0 +1,35 @@
+@import "tailwindcss";
+@import "../styles/tokens.css";
+@import "../styles/theme.css";
+@import "tw-animate-css";
+
+@layer base {
+  html {
+    @apply bg-bg-primary font-sans text-content-primary antialiased;
+  }
+
+  *,
+  ::before,
+  ::after {
+    border-color: var(--border-default);
+  }
+
+  ::selection {
+    background-color: var(--bg-brand-subtle);
+  }
+
+  /* Isolate mixed-direction runs (e.g. Arabic names inside English text). */
+  [dir="auto"],
+  bdi {
+    unicode-bidi: isolate;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

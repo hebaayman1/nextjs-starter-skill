@@ -1,0 +1,11 @@
+{
+  "name": "nextjs-starter-skill",
+  "owner": { "name": "hebaayman1" },
+  "plugins": [
+    {
+      "name": "nextjs-starter",
+      "source": "./plugins/nextjs-starter",
+      "description": "Scaffold Next.js 16 apps with Tailwind v4 tokens, Axios, TanStack Query, Zod and a layered feature architecture."
+    }
+  ]
+}

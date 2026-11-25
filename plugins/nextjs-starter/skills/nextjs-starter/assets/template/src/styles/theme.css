@@ -1,0 +1,75 @@
+/*
+ * Maps semantic tokens to Tailwind v4 utilities.
+ *   colors   -> bg-bg-primary, text-content-secondary, border-border-default
+ *   spacing  -> gap-xs, p-m, px-l  (numeric scale like p-4 still works)
+ *   radius   -> rounded-sm / -md / -lg  (single letters s/l would collide with Tailwind corner-side utilities)
+ *   type     -> text-caption / -body / -title / -heading / -display
+ *   shadows  -> shadow-s / -m
+ * IMPORTANT: when you add or rename a spacing, radius, text or shadow key here,
+ * update src/lib/utils.ts so cn() resolves conflicts correctly.
+ */
+
+/* Remove Tailwind's default palette so only design-system colors are available. */
+@theme {
+  --color-*: initial;
+}
+
+@theme inline {
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  --color-white: #ffffff;
+  --color-black: #000000;
+
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-tertiary: var(--bg-tertiary);
+  --color-bg-brand: var(--bg-brand);
+  --color-bg-brand-hover: var(--bg-brand-hover);
+  --color-bg-brand-subtle: var(--bg-brand-subtle);
+  --color-bg-error-subtle: var(--bg-error-subtle);
+  --color-bg-success-subtle: var(--bg-success-subtle);
+  --color-bg-warning-subtle: var(--bg-warning-subtle);
+
+  --color-content-primary: var(--content-primary);
+  --color-content-secondary: var(--content-secondary);
+  --color-content-tertiary: var(--content-tertiary);
+  --color-content-brand: var(--content-brand);
+  --color-content-on-brand: var(--content-on-brand);
+  --color-content-error: var(--content-error);
+  --color-content-success: var(--content-success);
+  --color-content-warning: var(--content-warning);
+
+  --color-border-default: var(--border-default);
+  --color-border-strong: var(--border-strong);
+  --color-border-focus: var(--border-focus);
+  --color-border-error: var(--border-error);
+
+  --spacing-3xs: 0.125rem;
+  --spacing-2xs: 0.25rem;
+  --spacing-xs: 0.5rem;
+  --spacing-s: 0.75rem;
+  --spacing-m: 1rem;
+  --spacing-l: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1rem;
+  --text-body: 0.875rem;
+  --text-body--line-height: 1.25rem;
+  --text-title: 1rem;
+  --text-title--line-height: 1.5rem;
+  --text-heading: 1.5rem;
+  --text-heading--line-height: 2rem;
+  --text-display: 2.25rem;
+  --text-display--line-height: 2.75rem;
+
+  --shadow-s: 0 1px 2px rgb(16 24 40 / 0.06);
+  --shadow-m: 0 4px 12px rgb(16 24 40 / 0.1);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
