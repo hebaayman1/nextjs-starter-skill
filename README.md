@@ -1,6 +1,6 @@
 # nextjs-starter-skill
 
-A Claude Code plugin + skill that scaffolds Next.js apps with a fixed stack and architecture, and keeps Claude following that architecture when it adds features later.
+A skill for Claude Code and Codex that scaffolds Next.js apps with a fixed stack and architecture, and keeps agents following that architecture when they add features later. It is also packaged as a Claude Code plugin.
 
 ## What you get
 
@@ -13,7 +13,7 @@ A Claude Code plugin + skill that scaffolds Next.js apps with a fixed stack and 
 - Shared components layered as `ui → molecules → organisms`; they take props and never fetch.
 - Styling only through design-token utilities defined in `src/styles/tokens.css` and `theme.css`.
 - A dev-only `/design-system` gallery with a demo for every shared component.
-- A `CLAUDE.md` in every generated project with the architecture rules, so Claude follows them in later sessions.
+- Matching `AGENTS.md` and `CLAUDE.md` files in every generated project, so Codex and Claude Code follow the same architecture rules in later sessions.
 - An optional example `posts` feature that shows the full data flow end to end.
 
 ## Install (Claude Code)
@@ -29,7 +29,25 @@ The skill also activates when you add a feature, page, API call or component ins
 
 Get updates later with `/plugin marketplace update`.
 
-## Use without Claude
+## Install (Codex)
+
+Clone this repository, then copy the skill directory into your user skills folder. Run one of these from the repository root:
+
+```bash
+mkdir -p ~/.agents/skills
+cp -R plugins/nextjs-starter/skills/nextjs-starter ~/.agents/skills/
+```
+
+PowerShell:
+
+```powershell
+New-Item -ItemType Directory -Force "$HOME\.agents\skills" | Out-Null
+Copy-Item plugins/nextjs-starter/skills/nextjs-starter -Destination "$HOME\.agents\skills" -Recurse
+```
+
+Start a new Codex session and ask it to use `$nextjs-starter` to create a Next.js app. The generated `AGENTS.md` gives Codex the architecture rules for later work. To update the installed skill, replace the copied `nextjs-starter` directory with the latest version from this repository.
+
+## Use the generator directly
 
 Requires Node.js 20.9+ and npm.
 
@@ -74,7 +92,7 @@ Open http://localhost:3000. The component gallery is at http://localhost:3000/de
 plugins/nextjs-starter/
   .claude-plugin/plugin.json               # plugin manifest (version lives here)
   skills/nextjs-starter/
-    SKILL.md                               # instructions Claude follows
+    SKILL.md                               # instructions for Claude Code and Codex
     scripts/scaffold.mjs                   # the generator
     assets/template/                       # files copied into every new project
 ```

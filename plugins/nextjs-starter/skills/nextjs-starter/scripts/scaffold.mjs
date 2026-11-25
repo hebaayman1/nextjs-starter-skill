@@ -94,6 +94,8 @@ function walk(dir) {
 }
 walk(targetDir)
 
+// Both agents read the same architecture rules without maintaining two template files.
+writeFileSync(join(targetDir, "AGENTS.md"), readFileSync(join(targetDir, "CLAUDE.md"), "utf8"))
 writeFileSync(join(targetDir, ".env.local"), readFileSync(join(targetDir, ".env.example"), "utf8"))
 
 // ---------- install / git ----------
@@ -131,5 +133,5 @@ console.log(`
   npm run dev        → http://localhost:3000
                        http://localhost:3000/design-system (gallery)
 
-Architecture rules: ${join(target, "CLAUDE.md")}
+Architecture rules: ${join(target, "AGENTS.md")} (Codex), ${join(target, "CLAUDE.md")} (Claude Code)
 ${keepExample ? "Example feature:    src/features/posts (delete it when you add real features)\n" : ""}`)
