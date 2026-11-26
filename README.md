@@ -30,6 +30,16 @@ A skill for Claude Code and Codex with two Next.js 16 starter options: **applica
 - SEO from day one: `metadataBase`, Open Graph and Twitter defaults, a generated social image, favicon, `robots.ts`, `sitemap.ts`, and `llms.txt`; external CMS, careers, and forms live in `src/services/` when needed.
 - Optional GSAP, Three.js, Embla, Axios, and HTML sanitizing only after the user confirms the needed libraries.
 
+**Multiple languages (optional, both options):**
+
+Pass `--languages` (the skill asks, offering Arabic and English by default and letting you add any other language). The project then uses [next-intl](https://next-intl.dev):
+
+- Every URL carries its language (`/ar/...`, `/en/...`); the first language is the default and `/` redirects to it. Browser detection and the locale cookie are off, so the URL alone decides the language.
+- `messages/<code>.json` holds all UI text, with the same keys in every language. Arabic and English come translated; other languages start as English copies to translate.
+- `src/i18n/routing.ts` (locales, `Link`/`useRouter`/`usePathname`, RTL helpers), `src/i18n/request.ts`, `src/proxy.ts`, and every route under `src/app/[locale]/`, with `<html lang dir>` so right-to-left languages flip.
+- `npm run lint:i18n` (also run before every build) fails on duplicate keys or keys missing from a language, and `t("key")` is type-checked.
+- Applications add a `useLanguage()` hook, a `localizedName()` helper for `nameAr`/`nameEn` API fields, a language toggle in the top bar, and the Noto Sans Arabic font for Arabic-script languages. Websites add a link-based language switcher and per-language metadata, hreflang alternates, sitemap, and `llms.txt`.
+
 ## Install (Claude Code)
 
 ```
@@ -68,6 +78,7 @@ Requires Node.js 20.9+ and npm.
 ```bash
 node plugins/nextjs-starter/skills/nextjs-starter/scripts/scaffold.mjs my-app --type application --name "My App"
 node plugins/nextjs-starter/skills/nextjs-starter/scripts/scaffold.mjs my-site --type website --name "My Site" --site-url https://example.com --libraries gsap,embla-carousel-react
+node plugins/nextjs-starter/skills/nextjs-starter/scripts/scaffold.mjs my-portal --name "My Portal" --languages ar,en,fr
 ```
 
 | Option | Default | Description |
@@ -79,6 +90,7 @@ node plugins/nextjs-starter/skills/nextjs-starter/scripts/scaffold.mjs my-site -
 | `--api-url <url>` | `https://jsonplaceholder.typicode.com` | Application only; must be an http(s) URL. Written to `.env.local` as `NEXT_PUBLIC_API_BASE_URL`. |
 | `--site-url <url>` | `https://example.com` | Website only; must be an http(s) URL. Written to `.env.local` as `NEXT_PUBLIC_SITE_URL` for metadata, sitemap, and robots. Set the real origin before launch. |
 | `--libraries <list>` | none | Website only; comma-separated: `gsap`, `three`, `embla-carousel-react`, `axios`, `isomorphic-dompurify`. |
+| `--languages <list>` | none (single language) | Both options; two or more comma-separated language codes such as `ar,en` or `ar,en,fr,pt-BR`. The first one is the default. Sets up next-intl routing and messages. |
 | `--no-example` | | Application only; leave out the example `posts` feature. |
 | `--no-install` | | Skip `npm install`. |
 | `--no-git` | | Skip `git init` and the initial commit. |
@@ -100,6 +112,7 @@ Open http://localhost:3000. The application component gallery is at http://local
 | `npm run build` / `npm start` | Production build / serve it |
 | `npm run lint` / `lint:fix` | ESLint |
 | `npm run format` / `format:check` | Prettier (application only) |
+| `npm run lint:i18n` | Multilingual only: same keys in every `messages/*.json`, no duplicates (also runs before `build`) |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm test` / `test:watch` | Vitest |
 
@@ -114,6 +127,7 @@ plugins/nextjs-starter/
     scripts/scaffold.mjs                   # the generator
     assets/template/                       # application template
     assets/website-template/               # website template
+    assets/i18n/                           # multilingual overlay (shared/, application/, website/)
 ```
 
 ## Contributing to the template
@@ -126,4 +140,5 @@ plugins/nextjs-starter/
    node --test tests/scaffold.test.mjs
    node plugins/nextjs-starter/skills/nextjs-starter/scripts/scaffold.mjs /tmp/check-site --type website --no-git
    cd /tmp/check-site && npm run lint && npm run typecheck && npm test && npm run build
+   # repeat with --languages ar,en for both options when touching assets/i18n/
    ```

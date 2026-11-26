@@ -1,0 +1,41 @@
+{
+  "metadata": {
+    "description": "%%APP_DESCRIPTION%%"
+  },
+  "navigation": {
+    "main": "القائمة الرئيسية",
+    "home": "الرئيسية",
+    "posts": "المنشورات (مثال)",
+    "open": "فتح القائمة",
+    "close": "إغلاق القائمة",
+    "drawer": "القائمة"
+  },
+  "language": {
+    "label": "اللغة",
+    "switchTo": "التبديل إلى {language}"
+  },
+  "home": {
+    "startHere": "ابدأ من هنا",
+    "readRules": "اقرأ CLAUDE.md لمعرفة قواعد البنية.",
+    "replaceTokens": "استبدل src/styles/tokens.css بمتغيرات التصميم الخاصة بك.",
+    "addFeatures": "أضف الميزات داخل src/features.",
+    "addMessages": "أضف كل نص للواجهة إلى مجلد messages بجميع اللغات.",
+    "exampleFeature": "عرض الميزة التجريبية",
+    "gallery": "معرض المكونات"
+  },
+  "errors": {
+    "title": "حدث خطأ ما",
+    "retry": "حاول مرة أخرى",
+    "notFoundTitle": "الصفحة غير موجودة",
+    "notFoundDescription": "الصفحة التي تبحث عنها غير موجودة أو تم نقلها.",
+    "backHome": "العودة إلى الرئيسية"
+  },
+  "posts": {
+    "title": "المنشورات",
+    "loading": "جارٍ تحميل المنشورات…",
+    "loadError": "تعذّر تحميل المنشورات",
+    "empty": "لا توجد منشورات بعد",
+    "refresh": "تحديث",
+    "retry": "حاول مرة أخرى"
+  }
+}

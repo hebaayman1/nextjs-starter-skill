@@ -66,7 +66,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-dvh bg-bg-secondary">
       {/* Desktop rail */}
-      <aside className="hidden w-60 shrink-0 flex-col gap-l border-r border-border-default bg-bg-primary p-m lg:flex">
+      <aside className="hidden w-60 shrink-0 flex-col gap-l border-e border-border-default bg-bg-primary p-m lg:flex">
         <Link href="/" className={cn("px-s text-title font-semibold text-content-primary", focusRing)}>
           {APP_NAME}
         </Link>

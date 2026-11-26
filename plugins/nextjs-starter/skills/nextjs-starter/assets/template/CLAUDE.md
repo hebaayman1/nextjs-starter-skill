@@ -5,16 +5,39 @@ Read this before writing code in this project. These rules are what keep every p
 ## Stack
 
 Next.js 16 App Router, React 19 with React Compiler, TypeScript strict, Tailwind CSS v4 driven by design tokens, Base UI primitives, class-variance-authority + `cn`, Axios, TanStack Query v5, Zod, TanStack Table, Recharts, Vitest + Testing Library. Package manager: npm.
+<!-- @i18n-start -->
+
+Languages: %%LANGUAGES%% via next-intl; `%%DEFAULT_LOCALE%%` is the default. See [Languages](#languages).
+<!-- @i18n-end -->
 
 ## Where code goes
 
 ```text
+<!-- @i18n-start -->
+messages/<language>.json      # UI text per language: same keys, same layout in every file
+scripts/check-i18n.mjs        # `npm run lint:i18n`, also runs before every build
+src/
+├── proxy.ts                  # next-intl proxy: adds the locale prefix to every URL
+├── global.d.ts               # Types t("key") against messages/%%DEFAULT_LOCALE%%.json
+├── i18n/
+│   ├── routing.ts            # Locales, default locale, isRtlLocale, Link/useRouter/usePathname
+│   └── request.ts            # Loads messages/{locale}.json for each request
+├── app/                      # Routing ONLY: pages, layouts, loading/error/not-found
+│   ├── layout.tsx            # Pass-through; the real root layout is [locale]/layout.tsx
+│   ├── providers.tsx         # Client providers (React Query + devtools)
+│   └── [locale]/             # Every page sits under the locale segment
+│       ├── layout.tsx        # <html lang dir>, fonts, metadata, NextIntlClientProvider, <Providers>
+│       ├── (app)/            # Route group wrapped in <AppShell>; not in the URL
+│       └── design-system/    # Dev-only component gallery (404 in production)
+<!-- @i18n-end -->
+<!-- @no-i18n-start -->
 src/
 ├── app/                      # Routing ONLY: pages, layouts, loading/error/not-found
 │   ├── layout.tsx            # <html>, fonts, metadata, <Providers>
 │   ├── providers.tsx         # Client providers (React Query + devtools)
 │   ├── (app)/                # Route group wrapped in <AppShell>; not in the URL
 │   └── design-system/        # Dev-only component gallery (404 in production)
+<!-- @no-i18n-end -->
 ├── features/<feature>/       # Everything for one business domain
 │   ├── api.ts                # HTTP calls via request() + Zod parsing; no React
 │   ├── hooks.ts              # Query-key factory, queryOptions, useQuery/useMutation hooks
@@ -26,9 +49,18 @@ src/
 │   ├── molecules/            # Small compositions (stat tile, filter chip…)
 │   ├── organisms/            # Whole sections (data table, filter panel, chart frame…)
 │   ├── icons/                # Icon components
+<!-- @i18n-start -->
+│   └── app-shell/            # Nav rail, top bar, mobile drawer, navigation.ts, language-toggle.tsx
+├── hooks/                    # Shared, feature-agnostic hooks (use-language.ts)
+<!-- @i18n-end -->
+<!-- @no-i18n-start -->
 │   └── app-shell/            # Nav rail, top bar, mobile drawer, navigation.ts
 ├── hooks/                    # Shared, feature-agnostic hooks
+<!-- @no-i18n-end -->
 ├── lib/
+<!-- @i18n-start -->
+│   ├── localized-name.ts     # Picks nameAr / nameEn… from API data
+<!-- @i18n-end -->
 │   ├── api/client.ts         # The axios instance + ApiError. The ONLY HTTP entry point
 │   ├── query-client.ts       # QueryClient defaults (staleTime, retry rules)
 │   ├── utils.ts              # cn(), configured with the custom Tailwind scales
@@ -53,6 +85,9 @@ src/
 10. **Document every shared component** in the gallery: add `src/app/design-system/_demos/<name>.tsx`, then register it in `_lib/registry.ts`.
 11. **`"use client"` as low as possible.** Only the smallest component that needs state, effects, or browser APIs.
 12. **Client components only use `NEXT_PUBLIC_*` env vars.** Document every variable in `.env.example`.
+<!-- @i18n-start -->
+13. **No hard-coded UI text.** Every visible string, aria-label, and page title comes from `messages/{locale}.json` (see [Languages](#languages)).
+<!-- @i18n-end -->
 
 ## Adding a feature (recipe)
 
@@ -61,11 +96,36 @@ src/
 3. `hooks.ts`: key factory, `queryOptions`, `useX` / `useCreateX` hooks.
 4. `components/<name>-view.tsx`: `"use client"`, uses the hooks, renders loading/error/empty/data.
 5. `index.ts`: export the view, hooks, and types.
+<!-- @i18n-start -->
+6. `src/app/[locale]/(app)/<route>/page.tsx`: thin page that calls `setRequestLocale`, sets a translated title in `generateMetadata`, and renders the view.
+7. Add the route to `src/components/app-shell/navigation.ts` and its `labelKey` to the `navigation` namespace.
+8. Add the feature's namespace to every `messages/*.json` file.
+9. Tests next to the code: `*.test.ts(x)`.
+<!-- @i18n-end -->
+<!-- @no-i18n-start -->
 6. `src/app/(app)/<route>/page.tsx`: thin page rendering the view.
 7. Add the route to `src/components/app-shell/navigation.ts`.
 8. Tests next to the code: `*.test.ts(x)`.
+<!-- @no-i18n-end -->
 
 `src/features/posts` is a complete working example of this recipe (if it was kept at scaffold time).
+<!-- @i18n-start -->
+
+## Languages
+
+The app speaks %%LANGUAGES%% through **next-intl**; nothing else is used for UI text. Every URL carries its language (`/%%DEFAULT_LOCALE%%/posts`). Browser-language detection and the locale cookie are off, so the URL alone decides the language, and `/` redirects to `/%%DEFAULT_LOCALE%%`.
+
+- **Text:** add a key in the same place in every `messages/*.json` file, then use it. Group keys by namespace: one per feature, plus shared ones such as `errors`. Messages use ICU syntax: `{name}` for values, `{count, plural, one {# item} other {# items}}` for plurals; escape literal braces and angle brackets.
+- **Server components:** `const t = useTranslations("posts")` (or `await getTranslations(...)` in async code). Every page and layout under `[locale]` calls `setRequestLocale(locale)` first so it can render statically; `generateMetadata` uses `getTranslations({ locale, namespace })`.
+- **Client components:** `const { t, locale, isRTL } = useLanguage("posts")` from `@/hooks/use-language`, or `useTranslations` directly.
+- **Links and navigation:** import `Link`, `useRouter`, `usePathname`, `redirect` from `@/i18n/routing`, never from `next/link` or `next/navigation`, so the locale prefix stays in the URL. Its `usePathname()` returns the path without the locale.
+- **Right-to-left:** `[locale]/layout.tsx` sets `<html dir>` from `isRtlLocale`. Use logical utilities (`ms-*`, `me-*`, `ps-*`, `pe-*`, `start-*`, `end-*`, `border-s/e`, `text-start/end`) and the `rtl:` variant instead of left/right ones. Use `isRTL` only for what CSS cannot flip, like directional icons or chart axes.
+- **Numbers and dates:** pass the current `locale` to the helpers in `lib/format.ts`.
+- **Backend text** (role, department, or category names) is stored per language as `nameAr`, `nameEn`…, not in messages. Show it with `localizedName(entity, locale)` or `localizedField(entity, "title", locale)` from `@/lib/localized-name`; they fall back to another language when one is empty.
+- **Switching language:** `components/app-shell/language-toggle.tsx` replaces the locale in the URL and keeps the path and query.
+- **Adding a language:** add its code to `locales` in `src/i18n/routing.ts`, copy `messages/%%DEFAULT_LOCALE%%.json` to `messages/<code>.json`, and translate every value. Right-to-left languages already get `dir="rtl"`; Arabic-script languages need the Arabic font in `app/fonts.ts`.
+- **Checks:** `npm run lint:i18n` fails on invalid JSON, a key defined twice, or a key missing from any language. It runs before every build. `npm run typecheck` fails on a `t("key")` that does not exist.
+<!-- @i18n-end -->
 
 ## Commands
 
@@ -73,9 +133,17 @@ src/
 npm run dev          # dev server; gallery at /design-system
 npm run build        # production build
 npm run lint         # ESLint (Next + TypeScript + Prettier compat)
+<!-- @i18n-start -->
+npm run lint:i18n    # messages files: valid JSON, no duplicate keys, same keys in every language
+<!-- @i18n-end -->
 npm run typecheck    # tsc --noEmit
 npm run format       # Prettier with Tailwind class sorting
 npm test             # Vitest
 ```
 
+<!-- @i18n-start -->
+Before finishing any task: `npm run lint && npm run lint:i18n && npm run typecheck && npm test && npm run build`.
+<!-- @i18n-end -->
+<!-- @no-i18n-start -->
 Before finishing any task: `npm run lint && npm run typecheck && npm test && npm run build`.
+<!-- @no-i18n-end -->

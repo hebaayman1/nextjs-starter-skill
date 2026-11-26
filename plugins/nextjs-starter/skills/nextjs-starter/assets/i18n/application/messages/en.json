@@ -1,0 +1,41 @@
+{
+  "metadata": {
+    "description": "%%APP_DESCRIPTION%%"
+  },
+  "navigation": {
+    "main": "Main",
+    "home": "Home",
+    "posts": "Posts (example)",
+    "open": "Open navigation",
+    "close": "Close navigation",
+    "drawer": "Navigation"
+  },
+  "language": {
+    "label": "Language",
+    "switchTo": "Switch to {language}"
+  },
+  "home": {
+    "startHere": "Start here",
+    "readRules": "Read CLAUDE.md for the architecture rules.",
+    "replaceTokens": "Replace src/styles/tokens.css with your design tokens.",
+    "addFeatures": "Add features under src/features.",
+    "addMessages": "Add every UI string to messages/, in every language.",
+    "exampleFeature": "See the example feature",
+    "gallery": "Component gallery"
+  },
+  "errors": {
+    "title": "Something went wrong",
+    "retry": "Try again",
+    "notFoundTitle": "Page not found",
+    "notFoundDescription": "The page you are looking for does not exist or has moved.",
+    "backHome": "Back home"
+  },
+  "posts": {
+    "title": "Posts",
+    "loading": "Loading posts…",
+    "loadError": "Could not load posts",
+    "empty": "No posts yet",
+    "refresh": "Refresh",
+    "retry": "Try again"
+  }
+}

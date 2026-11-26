@@ -13,7 +13,7 @@ export default function HomePage() {
       </div>
       <div className={`${surface} flex flex-col gap-s p-l`}>
         <p className="text-title font-medium">Start here</p>
-        <ul className="list-disc pl-l text-body text-content-secondary">
+        <ul className="list-disc ps-l text-body text-content-secondary">
           <li>Read CLAUDE.md for the architecture rules.</li>
           <li>Replace src/styles/tokens.css with your design tokens.</li>
           <li>Add features under src/features/&lt;name&gt;.</li>

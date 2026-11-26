@@ -83,6 +83,131 @@ test("application remains the default profile", () => {
   }
 })
 
+const read = (target, path) => readFileSync(join(target, path), "utf8")
+const messages = (target, locale) => JSON.parse(read(target, `messages/${locale}.json`))
+
+function keyPaths(value, prefix = "") {
+  if (typeof value !== "object") return [prefix]
+  return Object.entries(value).flatMap(([key, child]) => keyPaths(child, prefix ? `${prefix}.${key}` : key))
+}
+
+test("single-language projects get no i18n files or rules", () => {
+  for (const type of ["application", "website"]) {
+    const { target, cleanup } = scaffold(["--type", type])
+    try {
+      assert.ok(!existsSync(join(target, "messages")))
+      assert.ok(!existsSync(join(target, "src/proxy.ts")))
+      assert.ok(!existsSync(join(target, "src/app/[locale]")))
+      assert.ok(!JSON.parse(read(target, "package.json")).dependencies["next-intl"])
+      assert.doesNotMatch(read(target, "CLAUDE.md"), /next-intl|@i18n|@no-i18n/)
+      assert.deepEqual(leftoverPlaceholders(target), [])
+    } finally {
+      cleanup()
+    }
+  }
+})
+
+test("multilingual application moves routes under [locale] with Arabic as the default", () => {
+  const { target, cleanup } = scaffold(["--name", "Yas Now", "--description", 'Say "hi"', "--languages", "ar,en"])
+  try {
+    for (const path of [
+      "src/app/[locale]/layout.tsx",
+      "src/app/[locale]/(app)/posts/page.tsx",
+      "src/app/[locale]/design-system/page.tsx",
+      "src/i18n/routing.ts",
+      "src/i18n/request.ts",
+      "src/proxy.ts",
+      "src/hooks/use-language.ts",
+      "src/lib/localized-name.ts",
+      "src/components/app-shell/language-toggle.tsx",
+      "scripts/check-i18n.mjs",
+    ]) assert.ok(existsSync(join(target, path)), path)
+    assert.ok(!existsSync(join(target, "src/app/(app)")))
+    assert.ok(!existsSync(join(target, "src/app/design-system")))
+    assert.deepEqual(readdirSync(join(target, "messages")).sort(), ["ar.json", "en.json"])
+
+    const routing = read(target, "src/i18n/routing.ts")
+    assert.match(routing, /locales: \["ar", "en"\]/)
+    assert.match(routing, /defaultLocale: "ar"/)
+    assert.match(routing, /localeDetection: false/)
+    assert.match(read(target, "src/app/not-found.tsx"), /lang="ar" dir="rtl"/)
+
+    const pkg = JSON.parse(read(target, "package.json"))
+    assert.ok(pkg.dependencies["next-intl"])
+    assert.equal(pkg.scripts.prebuild, "npm run lint:i18n")
+    assert.equal(pkg.scripts["lint:i18n"], "node scripts/check-i18n.mjs")
+
+    // Arabic gets a font that covers its script.
+    assert.match(read(target, "src/app/fonts.ts"), /Noto_Sans_Arabic/)
+    assert.match(read(target, "src/styles/theme.css"), /var\(--font-inter\), var\(--font-arabic\)/)
+
+    // Quotes in the description are escaped, and both languages share the same keys.
+    assert.equal(messages(target, "en").metadata.description, 'Say "hi"')
+    assert.notEqual(messages(target, "ar").navigation.home, messages(target, "en").navigation.home)
+    assert.deepEqual(keyPaths(messages(target, "ar")), keyPaths(messages(target, "en")))
+
+    const rules = read(target, "CLAUDE.md")
+    assert.match(rules, /Arabic \(`ar`\), English \(`en`\)/)
+    assert.match(rules, /## Languages/)
+    assert.doesNotMatch(rules, /@i18n|@no-i18n/)
+    assert.equal(read(target, "AGENTS.md"), rules)
+    assert.deepEqual(leftoverPlaceholders(target), [])
+  } finally {
+    cleanup()
+  }
+})
+
+test("extra languages start as English copies and non-Arabic projects skip the Arabic font", () => {
+  const { target, cleanup } = scaffold(["--languages", "en, FR ,pt-br", "--no-example"])
+  try {
+    assert.deepEqual(readdirSync(join(target, "messages")).sort(), ["en.json", "fr.json", "pt-BR.json"])
+    assert.deepEqual(messages(target, "fr"), messages(target, "en"))
+    assert.match(read(target, "src/i18n/routing.ts"), /locales: \["en", "fr", "pt-BR"\]/)
+    assert.doesNotMatch(read(target, "src/app/fonts.ts"), /Arabic/)
+    assert.doesNotMatch(read(target, "src/styles/theme.css"), /font-arabic/)
+    // --no-example removes the example route, feature, and its messages.
+    assert.ok(!existsSync(join(target, "src/app/[locale]/(app)/posts")))
+    assert.ok(!existsSync(join(target, "src/features/posts")))
+    assert.equal(messages(target, "en").posts, undefined)
+    assert.equal(messages(target, "en").navigation.posts, undefined)
+    assert.deepEqual(leftoverPlaceholders(target), [])
+  } finally {
+    cleanup()
+  }
+})
+
+test("multilingual website localizes pages, sitemap, and llms.txt", () => {
+  const { target, cleanup } = scaffold(["--type", "website", "--languages", "ar,en"])
+  try {
+    for (const path of [
+      "src/app/[locale]/layout.tsx",
+      "src/app/[locale]/page.tsx",
+      "src/app/[locale]/about/page.tsx",
+      "src/app/[locale]/not-found.tsx",
+      "src/components/layout/language-switcher.tsx",
+      "src/lib/localized-url.ts",
+      "src/proxy.ts",
+    ]) assert.ok(existsSync(join(target, path)), path)
+    assert.ok(!existsSync(join(target, "src/app/page.tsx")))
+    assert.ok(!existsSync(join(target, "src/app/about")))
+    assert.match(read(target, "src/app/sitemap.ts"), /alternates: \{ languages \}/)
+    assert.match(read(target, "src/components/ui/button.tsx"), /from "@\/i18n\/routing"/)
+    assert.deepEqual(keyPaths(messages(target, "ar")), keyPaths(messages(target, "en")))
+    assert.doesNotMatch(read(target, "CLAUDE.md"), /@i18n|@no-i18n/)
+    assert.deepEqual(leftoverPlaceholders(target), [])
+  } finally {
+    cleanup()
+  }
+})
+
+test("invalid language lists are rejected", () => {
+  assert.match(scaffoldFails(["--languages", "ar"]), /at least two languages/)
+  assert.match(scaffoldFails(["--languages", "ar,en,AR"]), /lists "ar" twice/)
+  assert.match(scaffoldFails(["--languages", "ar,english"]), /Unknown language code "english"/)
+  assert.match(scaffoldFails(["--languages", "ar,../en"]), /Unknown language code/)
+  assert.match(scaffoldFails(["--languages"]), /--languages needs a comma-separated list/)
+})
+
 test("options for the other profile are rejected", () => {
   assert.match(scaffoldFails(["--libraries", "gsap"]), /--libraries is available only for websites/)
   assert.match(scaffoldFails(["--site-url", "https://acme.example"]), /--site-url is available only for websites/)
