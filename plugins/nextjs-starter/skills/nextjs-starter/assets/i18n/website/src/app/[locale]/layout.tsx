@@ -7,6 +7,9 @@ import { MainLayout } from "@/components"
 import { site } from "@/config/site"
 import { direction, routing } from "@/i18n/routing"
 import { siteOrigin } from "@/lib/site-url"
+// @themes-start
+import { themeScript } from "@/lib/theme"
+// @themes-end
 import "../globals.css"
 
 type Props = { children: ReactNode; params: Promise<{ locale: string }> }
@@ -33,7 +36,19 @@ export default async function LocaleLayout({ children, params }: Props) {
   setRequestLocale(locale)
 
   return (
-    <html lang={locale} dir={direction(locale)}>
+    <html
+      lang={locale}
+      dir={direction(locale)}
+      // @themes-start
+      // themeScript sets data-theme before React hydrates, so the server HTML differs on purpose.
+      suppressHydrationWarning
+      // @themes-end
+    >
+      {/* @themes-start */}
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      {/* @themes-end */}
       <body className="font-sans antialiased">
         <NextIntlClientProvider>
           <MainLayout>{children}</MainLayout>

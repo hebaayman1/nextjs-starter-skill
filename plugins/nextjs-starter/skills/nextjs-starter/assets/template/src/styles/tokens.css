@@ -51,13 +51,28 @@
   --border-error: var(--red-600);
 }
 
-/* Dark values exist so the token pipeline is complete; opt in with <html data-theme="dark">. */
+/*
+ * Dark theme: applies when <html data-theme="dark">. Override every semantic token whose light value
+ * would not read on a dark background; primitives stay the same.
+ */
 [data-theme="dark"] {
   --bg-primary: var(--neutral-900);
   --bg-secondary: #1a2130;
   --bg-tertiary: #252d3d;
+  --bg-brand-subtle: #1e2a4a;
+  --bg-error-subtle: #3a1d1d;
+  --bg-success-subtle: #15301f;
+  --bg-warning-subtle: #36280f;
+
   --content-primary: var(--neutral-50);
   --content-secondary: var(--neutral-200);
-  --content-tertiary: var(--neutral-500);
+  --content-tertiary: #9ca3af;
+  --content-brand: #8fb0ff;
+  --content-error: #f87171;
+  --content-success: #4ade80;
+  --content-warning: #fbbf24;
+
   --border-default: #333d50;
+  --border-strong: #6b7280;
+  --border-error: #f87171;
 }

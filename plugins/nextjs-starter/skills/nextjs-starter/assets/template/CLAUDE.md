@@ -9,6 +9,10 @@ Next.js 16 App Router, React 19 with React Compiler, TypeScript strict, Tailwind
 
 Languages: %%LANGUAGES%% via next-intl; `%%DEFAULT_LOCALE%%` is the default. See [Languages](#languages).
 <!-- @i18n-end -->
+<!-- @themes-start -->
+
+Themes: %%THEME_NAMES%%, plus "system" (the default). See [Themes](#themes).
+<!-- @themes-end -->
 
 ## Where code goes
 
@@ -57,10 +61,16 @@ src/
 │   └── app-shell/            # Nav rail, top bar, mobile drawer, navigation.ts
 ├── hooks/                    # Shared, feature-agnostic hooks
 <!-- @no-i18n-end -->
+<!-- @themes-start -->
+│   └── use-theme.ts          # useTheme(): chosen theme, showing theme, setTheme()
+<!-- @themes-end -->
 ├── lib/
 <!-- @i18n-start -->
 │   ├── localized-name.ts     # Picks nameAr / nameEn… from API data
 <!-- @i18n-end -->
+<!-- @themes-start -->
+│   ├── theme.ts              # Theme list + the inline script that applies it before paint
+<!-- @themes-end -->
 │   ├── api/client.ts         # The axios instance + ApiError. The ONLY HTTP entry point
 │   ├── query-client.ts       # QueryClient defaults (staleTime, retry rules)
 │   ├── utils.ts              # cn(), configured with the custom Tailwind scales
@@ -126,6 +136,24 @@ The app speaks %%LANGUAGES%% through **next-intl**; nothing else is used for UI 
 - **Adding a language:** add its code to `locales` in `src/i18n/routing.ts`, copy `messages/%%DEFAULT_LOCALE%%.json` to `messages/<code>.json`, and translate every value. Right-to-left languages already get `dir="rtl"`; Arabic-script languages need the Arabic font in `app/fonts.ts`.
 - **Checks:** `npm run lint:i18n` fails on invalid JSON, a key defined twice, or a key missing from any language. It runs before every build. `npm run typecheck` fails on a `t("key")` that does not exist.
 <!-- @i18n-end -->
+<!-- @themes-start -->
+
+## Themes
+
+Themes: %%THEME_NAMES%%, plus "system", the default, which follows the OS light/dark setting. No theme library is used.
+
+- **How it works:** `<html data-theme="…">` selects the token values. An inline script from `lib/theme.ts`, rendered in the root layout's `<head>`, sets it before the first paint from the saved choice (`localStorage["theme"]`) or the system setting, so pages never flash. The root `<html>` has `suppressHydrationWarning` for that reason; keep both.
+- **Colors:** every theme is a block of semantic tokens in `src/styles/tokens.css`: light in `:root`, the others in `[data-theme="<name>"]`. When you add a semantic token, give it a value in every theme block that needs one. Components keep using the same utilities (`bg-bg-primary`, `text-content-secondary`) and never branch on the theme.
+- **`dark:` variant:** follows the chosen theme, not only the OS. Use it only for one-off exceptions; prefer tokens.
+- **In code:** `const { theme, preference, setTheme } = useTheme()` from `@/hooks/use-theme`. `theme` is what is showing (`undefined` on the server and during hydration); use it for things CSS cannot reach, such as chart colors or images. `preference` includes `"system"`.
+- **Switching:** `components/app-shell/theme-toggle.tsx` in the top bar lists System and every theme.
+<!-- @i18n-start -->
+- **Adding a theme:** add its name to `themes` in `src/lib/theme.ts`, a `[data-theme="<name>"]` block to `tokens.css`, and a `theme.<name>` label to every messages file.
+<!-- @i18n-end -->
+<!-- @no-i18n-start -->
+- **Adding a theme:** add its name to `themes` in `src/lib/theme.ts`, a `[data-theme="<name>"]` block to `tokens.css`, and its label in `theme-toggle.tsx`.
+<!-- @no-i18n-end -->
+<!-- @themes-end -->
 
 ## Commands
 

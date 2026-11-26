@@ -7,6 +7,9 @@ import { cn } from "@/lib/utils"
 import { focusRing } from "@/lib/variants"
 import { LanguageToggle } from "./language-toggle"
 import { navigation } from "./navigation"
+// @themes-start
+import { ThemeToggle } from "./theme-toggle"
+// @themes-end
 
 const APP_NAME = "%%APP_NAME%%"
 
@@ -92,7 +95,10 @@ export function AppShell({ children }: { children: ReactNode }) {
             </svg>
           </button>
           <span className="text-title font-semibold text-content-primary lg:hidden">{APP_NAME}</span>
-          <div className="ms-auto">
+          <div className="ms-auto flex items-center gap-xs">
+            {/* @themes-start */}
+            <ThemeToggle />
+            {/* @themes-end */}
             <LanguageToggle />
           </div>
         </header>

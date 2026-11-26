@@ -38,3 +38,19 @@ The site speaks %%LANGUAGES%% through **next-intl**; `%%DEFAULT_LOCALE%%` is the
 - To add a language: add its code to `locales` in `src/i18n/routing.ts`, copy `messages/%%DEFAULT_LOCALE%%.json` to `messages/<code>.json`, and translate every value.
 - `npm run lint:i18n` (also run before every build) fails on invalid JSON, a key defined twice, or a key missing from any language. `npm run typecheck` fails on a `t("key")` that does not exist.
 <!-- @i18n-end -->
+<!-- @themes-start -->
+
+## Themes
+
+Themes: %%THEME_NAMES%%, plus "system", the default, which follows the OS light/dark setting. No theme library is used.
+
+- `<html data-theme="…">` selects the token values in `src/app/globals.css`: light in `:root`, the others in `[data-theme="<name>"]` blocks. An inline script from `src/lib/theme.ts`, rendered in the root layout's `<head>`, sets it before the first paint from the saved choice (`localStorage["theme"]`) or the system setting; the root `<html>` keeps `suppressHydrationWarning` for that reason.
+- Give every new color token a value in each theme block. Components use the token utilities (`bg-background`, `text-muted`) and never branch on the theme; the `dark:` variant follows the chosen theme and is for one-off exceptions.
+- `useTheme()` from `src/hooks/use-theme.ts` returns `theme` (what is showing, `undefined` until hydration), `preference` (including `"system"`), and `setTheme()`. `components/layout/theme-toggle.tsx` in the header lists System and every theme.
+<!-- @i18n-start -->
+- To add a theme: add its name to `themes` in `src/lib/theme.ts`, a `[data-theme="<name>"]` block to `globals.css`, and a `theme.<name>` label to every messages file.
+<!-- @i18n-end -->
+<!-- @no-i18n-start -->
+- To add a theme: add its name to `themes` in `src/lib/theme.ts`, a `[data-theme="<name>"]` block to `globals.css`, and its label in `theme-toggle.tsx`.
+<!-- @no-i18n-end -->
+<!-- @themes-end -->

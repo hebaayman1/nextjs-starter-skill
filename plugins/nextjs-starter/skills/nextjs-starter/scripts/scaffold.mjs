@@ -29,6 +29,9 @@ const templates = {
   website: resolve(here, "../assets/website-template"),
 }
 const i18nOverlays = resolve(here, "../assets/i18n")
+const themeOverlays = resolve(here, "../assets/themes")
+// Where each profile keeps its theme tokens; custom themes get a block appended here.
+const themeTokenFiles = { application: "src/styles/tokens.css", website: "src/app/globals.css" }
 const i18nVersion = "^4.16.2"
 // Routes that move under app/[locale]/ when the project is multilingual (the overlay adds the rest).
 const i18nMoves = {
@@ -96,6 +99,23 @@ const languages = Object.hasOwn(options, "languages") ? parseLanguages(options.l
 const multilingual = languages.length > 0
 const language = (locale) => new Intl.Locale(locale).language
 const hasArabicScript = languages.some((locale) => arabicScriptLanguages.has(language(locale)))
+const themes = Object.hasOwn(options, "themes") ? parseThemes(options.themes) : []
+const themed = themes.length > 0
+const themeLabel = (name) => name[0].toUpperCase() + name.slice(1).replace(/-/g, " ")
+
+/** "light, dark ,Brand" -> ["light", "dark", "brand"]. Light and dark are required; "system" is built in. */
+function parseThemes(value) {
+  if (!value || value.startsWith("--")) fail("--themes needs a comma-separated list, for example --themes light,dark.")
+  const names = value.split(",").map((name) => name.trim().toLowerCase()).filter(Boolean)
+  for (const name of names) {
+    if (name === "system") fail('"system" is always available; leave it out of --themes.')
+    if (!/^[a-z][a-z0-9-]*$/.test(name)) fail(`Invalid theme name "${name}". Use lowercase letters, digits, and dashes.`)
+  }
+  const duplicate = names.find((name, index) => names.indexOf(name) !== index)
+  if (duplicate) fail(`--themes lists "${duplicate}" twice.`)
+  if (!names.includes("light") || !names.includes("dark")) fail("--themes must include light and dark, for example --themes light,dark.")
+  return ["light", "dark", ...names.filter((name) => name !== "light" && name !== "dark")]
+}
 
 /** "ar, en ,pt-br" -> ["ar", "en", "pt-BR"]. The first language is the default one. */
 function parseLanguages(value) {
@@ -149,10 +169,22 @@ const replacements = {
   "%%DEFAULT_LOCALE%%": languages[0] ?? "",
   "%%DEFAULT_DIR%%": multilingual && rtlLanguages.has(language(languages[0])) ? "rtl" : "ltr",
   "%%FONT_IMPORTS%%": hasArabicScript ? "Inter, Noto_Sans_Arabic" : "Inter",
+  "%%THEMES%%": themes.map((name) => JSON.stringify(name)).join(", "),
+  "%%THEME_NAMES%%": themes.map((name) => `\`${name}\``).join(", "),
+  "%%THEME_LABELS%%": themes
+    .map((name) => `${/^[a-z]\w*$/.test(name) ? name : JSON.stringify(name)}: ${JSON.stringify(themeLabel(name))}`)
+    .join(", "),
 }
 const keepExample = type === "application" && !flags.has("example")
-// Marked blocks (`// @name-start` … `// @name-end`, also in {/* */} and <!-- --> form) are kept or cut.
-const blocks = { example: keepExample, i18n: multilingual, "no-i18n": !multilingual, arabic: hasArabicScript }
+// Marked blocks (`// @name-start` … `// @name-end`, also in {/* */}, /* */ and <!-- --> form) are kept or cut.
+const blocks = {
+  example: keepExample,
+  i18n: multilingual,
+  "no-i18n": !multilingual,
+  arabic: hasArabicScript,
+  themes: themed,
+  "no-themes": !themed,
+}
 const appRoutes = multilingual ? "src/app/[locale]/(app)" : "src/app/(app)"
 const untranslated = []
 
@@ -182,6 +214,7 @@ if (multilingual) {
     if (!sources[locale]) untranslated.push(locale)
     const messages = JSON.parse(sources[locale] ?? sources.en)
     if (type === "application" && !keepExample) for (const key of exampleMessageKeys) deletePath(messages, key)
+    if (themed) messages.theme = themeMessages(locale)
     // Fill placeholders here, where JSON.stringify escapes quotes in the name or description.
     const json = JSON.stringify(messages, (_, value) => (typeof value === "string" ? fillPlaceholders(value) : value), 2)
     writeFileSync(join(messagesDir, `${locale}.json`), `${json}\n`)
@@ -193,6 +226,29 @@ if (multilingual) {
     if (!theme.includes("var(--font-inter),")) fail("src/styles/theme.css no longer defines --font-sans with Inter.")
     writeFileSync(themePath, theme.replace("var(--font-inter),", "var(--font-inter), var(--font-arabic),"))
   }
+}
+
+// ---------- themes ----------
+if (themed) {
+  if (type === "application") rmSync(join(targetDir, "src/hooks/.gitkeep"), { force: true })
+  cpSync(join(themeOverlays, "shared"), targetDir, { recursive: true })
+  cpSync(join(themeOverlays, type), targetDir, { recursive: true })
+  // Custom themes start from the light values; their token block is where the designer overrides them.
+  const tokensPath = join(targetDir, themeTokenFiles[type])
+  const custom = themes.filter((name) => name !== "light" && name !== "dark")
+  const blocksCss = custom
+    .map((name) => `\n/* "${name}" theme: starts from the light values in :root. Override semantic tokens here. */\n[data-theme="${name}"] {\n}\n`)
+    .join("")
+  if (blocksCss) writeFileSync(tokensPath, readFileSync(tokensPath, "utf8") + blocksCss)
+}
+
+/** Theme picker labels for one language: Arabic and English are translated; other languages and custom themes use English. */
+function themeMessages(locale) {
+  const translated = JSON.parse(readFileSync(join(themeOverlays, "messages.json"), "utf8"))
+  const labels = translated[language(locale)] ?? translated.en
+  return Object.fromEntries(
+    ["label", "system", ...themes].map((key) => [key, labels[key] ?? translated.en[key] ?? themeLabel(key)]),
+  )
 }
 
 function deletePath(object, path) {
@@ -219,7 +275,8 @@ function fillPlaceholders(text) {
 
 function applyBlocks(text) {
   for (const [name, keep] of Object.entries(blocks)) {
-    const marker = (edge) => String.raw`(?:// @${name}-${edge}|\{/\* @${name}-${edge} \*/\}|<!-- @${name}-${edge} -->)`
+    const marker = (edge) =>
+      String.raw`(?:// @${name}-${edge}|\{/\* @${name}-${edge} \*/\}|/\* @${name}-${edge} \*/|<!-- @${name}-${edge} -->)`
     const pattern = keep
       ? String.raw`^[ \t]*(?:${marker("start")}|${marker("end")})[ \t]*\r?\n`
       : String.raw`^[ \t]*${marker("start")}[\s\S]*?${marker("end")}[ \t]*\r?\n`
@@ -309,4 +366,4 @@ ${keepExample ? "Example feature:    src/features/posts (delete it when you add 
   multilingual
     ? `Languages:          ${languages.join(", ")} (default ${languages[0]}), text in messages/<language>.json\n${untranslated.length > 0 ? `Translate:          ${untranslated.map((code) => `messages/${code}.json`).join(", ")} (copied from English)\n` : ""}`
     : ""
-}`)
+}${themed ? `Themes:             system (default), ${themes.join(", ")}; tokens in ${themeTokenFiles[type]}\n` : ""}`)

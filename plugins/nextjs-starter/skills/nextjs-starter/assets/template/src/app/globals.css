@@ -2,6 +2,11 @@
 @import "../styles/tokens.css";
 @import "../styles/theme.css";
 @import "tw-animate-css";
+/* @themes-start */
+
+/* `dark:` follows the chosen theme (<html data-theme="dark">), not only the OS setting. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+/* @themes-end */
 
 @layer base {
   html {

@@ -40,6 +40,15 @@ Pass `--languages` (the skill asks, offering Arabic and English by default and l
 - `npm run lint:i18n` (also run before every build) fails on duplicate keys or keys missing from a language, and `t("key")` is type-checked.
 - Applications add a `useLanguage()` hook, a `localizedName()` helper for `nameAr`/`nameEn` API fields, a language toggle in the top bar, and the Noto Sans Arabic font for Arabic-script languages. Websites add a link-based language switcher and per-language metadata, hreflang alternates, sitemap, and `llms.txt`.
 
+**Multiple themes (optional, both options):**
+
+Pass `--themes` (the skill asks, offering light and dark by default and letting you add named themes such as `high-contrast`). No theme library is added:
+
+- `<html data-theme="…">` selects a block of color tokens: light in `:root`, every other theme in `[data-theme="<name>"]` (application: `src/styles/tokens.css`; website: `src/app/globals.css`). Extra themes start as an empty block to fill in.
+- Visitors start on "system", which follows the OS light/dark setting. Their choice is saved in `localStorage`, and an inline script in `<head>` applies it before the first paint, so there is no flash.
+- `src/lib/theme.ts` (theme list and script), `src/hooks/use-theme.ts` (`useTheme()` for chart colors and similar), and a theme picker in the top bar or header. The `dark:` variant follows the chosen theme.
+- Works with `--languages`: the picker labels go into the messages files.
+
 ## Install (Claude Code)
 
 ```
@@ -78,7 +87,7 @@ Requires Node.js 20.9+ and npm.
 ```bash
 node plugins/nextjs-starter/skills/nextjs-starter/scripts/scaffold.mjs my-app --type application --name "My App"
 node plugins/nextjs-starter/skills/nextjs-starter/scripts/scaffold.mjs my-site --type website --name "My Site" --site-url https://example.com --libraries gsap,embla-carousel-react
-node plugins/nextjs-starter/skills/nextjs-starter/scripts/scaffold.mjs my-portal --name "My Portal" --languages ar,en,fr
+node plugins/nextjs-starter/skills/nextjs-starter/scripts/scaffold.mjs my-portal --name "My Portal" --languages ar,en,fr --themes light,dark
 ```
 
 | Option | Default | Description |
@@ -90,6 +99,7 @@ node plugins/nextjs-starter/skills/nextjs-starter/scripts/scaffold.mjs my-portal
 | `--api-url <url>` | `https://jsonplaceholder.typicode.com` | Application only; must be an http(s) URL. Written to `.env.local` as `NEXT_PUBLIC_API_BASE_URL`. |
 | `--site-url <url>` | `https://example.com` | Website only; must be an http(s) URL. Written to `.env.local` as `NEXT_PUBLIC_SITE_URL` for metadata, sitemap, and robots. Set the real origin before launch. |
 | `--libraries <list>` | none | Website only; comma-separated: `gsap`, `three`, `embla-carousel-react`, `axios`, `isomorphic-dompurify`. |
+| `--themes <list>` | none (single theme) | Both options; comma-separated theme names that include `light` and `dark`, for example `light,dark` or `light,dark,high-contrast`. Adds a theme picker; visitors start on the system setting. |
 | `--languages <list>` | none (single language) | Both options; two or more comma-separated language codes such as `ar,en` or `ar,en,fr,pt-BR`. The first one is the default. Sets up next-intl routing and messages. |
 | `--no-example` | | Application only; leave out the example `posts` feature. |
 | `--no-install` | | Skip `npm install`. |
@@ -128,6 +138,7 @@ plugins/nextjs-starter/
     assets/template/                       # application template
     assets/website-template/               # website template
     assets/i18n/                           # multilingual overlay (shared/, application/, website/)
+    assets/themes/                         # multi-theme overlay (shared/, application/, website/)
 ```
 
 ## Contributing to the template
@@ -140,5 +151,5 @@ plugins/nextjs-starter/
    node --test tests/scaffold.test.mjs
    node plugins/nextjs-starter/skills/nextjs-starter/scripts/scaffold.mjs /tmp/check-site --type website --no-git
    cd /tmp/check-site && npm run lint && npm run typecheck && npm test && npm run build
-   # repeat with --languages ar,en for both options when touching assets/i18n/
+   # repeat with --languages ar,en and --themes light,dark for both options when touching assets/i18n/ or assets/themes/
    ```

@@ -6,6 +6,9 @@ import { Suspense, useState, type ReactNode } from "react"
 import { cn } from "@/lib/utils"
 import { focusRing } from "@/lib/variants"
 import { navigation } from "./navigation"
+// @themes-start
+import { ThemeToggle } from "./theme-toggle"
+// @themes-end
 
 const APP_NAME = "%%APP_NAME%%"
 
@@ -88,6 +91,11 @@ export function AppShell({ children }: { children: ReactNode }) {
             </svg>
           </button>
           <span className="text-title font-semibold text-content-primary lg:hidden">{APP_NAME}</span>
+          {/* @themes-start */}
+          <div className="ms-auto">
+            <ThemeToggle />
+          </div>
+          {/* @themes-end */}
         </header>
 
         <main className="flex-1 p-m lg:p-l">{children}</main>

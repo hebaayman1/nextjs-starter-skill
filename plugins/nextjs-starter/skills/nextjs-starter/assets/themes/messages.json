@@ -1,0 +1,4 @@
+{
+  "en": { "label": "Theme", "system": "System", "light": "Light", "dark": "Dark" },
+  "ar": { "label": "المظهر", "system": "حسب النظام", "light": "فاتح", "dark": "داكن" }
+}

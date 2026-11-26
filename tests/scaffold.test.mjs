@@ -200,6 +200,82 @@ test("multilingual website localizes pages, sitemap, and llms.txt", () => {
   }
 })
 
+test("single-theme projects keep the OS-driven dark mode and no theme files", () => {
+  for (const type of ["application", "website"]) {
+    const { target, cleanup } = scaffold(["--type", type])
+    try {
+      assert.ok(!existsSync(join(target, "src/lib/theme.ts")))
+      assert.ok(!existsSync(join(target, "src/hooks/use-theme.ts")))
+      assert.doesNotMatch(read(target, "src/app/layout.tsx"), /themeScript|suppressHydrationWarning/)
+      assert.doesNotMatch(read(target, "CLAUDE.md"), /## Themes/)
+      assert.doesNotMatch(read(target, "src/app/globals.css"), /@themes|@no-themes|custom-variant/)
+    } finally {
+      cleanup()
+    }
+  }
+  const { target, cleanup } = scaffold(["--type", "website"])
+  try {
+    assert.match(read(target, "src/app/globals.css"), /prefers-color-scheme: dark/)
+  } finally {
+    cleanup()
+  }
+})
+
+test("multi-theme application adds the picker, no-flash script, and custom theme blocks", () => {
+  const { target, cleanup } = scaffold(["--themes", "dark, light,High-Contrast"])
+  try {
+    assert.match(read(target, "src/lib/theme.ts"), /themes = \["light", "dark", "high-contrast"\] as const/)
+    const layout = read(target, "src/app/layout.tsx")
+    assert.match(layout, /suppressHydrationWarning/)
+    assert.match(layout, /__html: themeScript/)
+    assert.match(read(target, "src/components/app-shell/app-shell.tsx"), /<ThemeToggle \/>/)
+    const toggle = read(target, "src/components/app-shell/theme-toggle.tsx")
+    assert.match(toggle, /"high-contrast": "High contrast"/)
+    assert.doesNotMatch(toggle, /next-intl/)
+    assert.match(read(target, "src/styles/tokens.css"), /\[data-theme="high-contrast"\] \{/)
+    assert.match(read(target, "src/app/globals.css"), /@custom-variant dark/)
+    assert.ok(!existsSync(join(target, "src/hooks/.gitkeep")))
+    assert.match(read(target, "CLAUDE.md"), /## Themes/)
+    assert.ok(!JSON.parse(read(target, "package.json")).dependencies["next-themes"])
+    assert.deepEqual(leftoverPlaceholders(target), [])
+  } finally {
+    cleanup()
+  }
+})
+
+test("themes and languages combine: picker labels are translated", () => {
+  for (const type of ["application", "website"]) {
+    const { target, cleanup } = scaffold(["--type", type, "--languages", "ar,en,fr", "--themes", "light,dark,brand"])
+    try {
+      assert.deepEqual(messages(target, "ar").theme, {
+        label: "المظهر", system: "حسب النظام", light: "فاتح", dark: "داكن", brand: "Brand",
+      })
+      assert.equal(messages(target, "fr").theme.dark, "Dark")
+      assert.deepEqual(keyPaths(messages(target, "ar")), keyPaths(messages(target, "en")))
+      const layout = read(target, "src/app/[locale]/layout.tsx")
+      assert.match(layout, /suppressHydrationWarning/)
+      assert.match(layout, /__html: themeScript/)
+      const toggle = read(target, type === "application"
+        ? "src/components/app-shell/theme-toggle.tsx"
+        : "src/components/layout/theme-toggle.tsx")
+      assert.match(toggle, /useTranslations\("theme"\)/)
+      assert.doesNotMatch(toggle, /const labels/)
+      assert.doesNotMatch(read(target, "CLAUDE.md"), /@themes|@i18n|@no-/)
+      assert.deepEqual(leftoverPlaceholders(target), [])
+    } finally {
+      cleanup()
+    }
+  }
+})
+
+test("invalid theme lists are rejected", () => {
+  assert.match(scaffoldFails(["--themes", "light"]), /must include light and dark/)
+  assert.match(scaffoldFails(["--themes", "light,dark,system"]), /"system" is always available/)
+  assert.match(scaffoldFails(["--themes", "light,dark,Dark"]), /lists "dark" twice/)
+  assert.match(scaffoldFails(["--themes", "light,dark,my theme"]), /Invalid theme name "my theme"/)
+  assert.match(scaffoldFails(["--themes"]), /--themes needs a comma-separated list/)
+})
+
 test("invalid language lists are rejected", () => {
   assert.match(scaffoldFails(["--languages", "ar"]), /at least two languages/)
   assert.match(scaffoldFails(["--languages", "ar,en,AR"]), /lists "ar" twice/)

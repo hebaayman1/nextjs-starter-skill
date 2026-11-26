@@ -4,6 +4,9 @@ import { hasLocale, NextIntlClientProvider } from "next-intl"
 import { getTranslations, setRequestLocale } from "next-intl/server"
 import type { ReactNode } from "react"
 import { direction, routing } from "@/i18n/routing"
+// @themes-start
+import { themeScript } from "@/lib/theme"
+// @themes-end
 import { fontVariables } from "../fonts"
 import { Providers } from "../providers"
 import "../globals.css"
@@ -29,7 +32,20 @@ export default async function LocaleLayout({ children, params }: Props) {
   setRequestLocale(locale)
 
   return (
-    <html lang={locale} dir={direction(locale)} className={fontVariables}>
+    <html
+      lang={locale}
+      dir={direction(locale)}
+      className={fontVariables}
+      // @themes-start
+      // themeScript sets data-theme before React hydrates, so the server HTML differs on purpose.
+      suppressHydrationWarning
+      // @themes-end
+    >
+      {/* @themes-start */}
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      {/* @themes-end */}
       <body>
         {/* Passes this locale's messages to client components. */}
         <NextIntlClientProvider>
