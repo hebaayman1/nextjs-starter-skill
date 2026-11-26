@@ -100,6 +100,7 @@ test("single-language projects get no i18n files or rules", () => {
       assert.ok(!existsSync(join(target, "src/app/[locale]")))
       assert.ok(!JSON.parse(read(target, "package.json")).dependencies["next-intl"])
       assert.doesNotMatch(read(target, "CLAUDE.md"), /next-intl|@i18n|@no-i18n/)
+      assert.doesNotMatch(read(target, "vitest.config.mts"), /next-intl|@i18n/)
       assert.deepEqual(leftoverPlaceholders(target), [])
     } finally {
       cleanup()
@@ -136,6 +137,7 @@ test("multilingual application moves routes under [locale] with Arabic as the de
     assert.ok(pkg.dependencies["next-intl"])
     assert.equal(pkg.scripts.prebuild, "npm run lint:i18n")
     assert.equal(pkg.scripts["lint:i18n"], "node scripts/check-i18n.mjs")
+    assert.match(read(target, "vitest.config.mts"), /inline: \["next-intl"\]/)
 
     // Arabic gets a font that covers its script.
     assert.match(read(target, "src/app/fonts.ts"), /Noto_Sans_Arabic/)

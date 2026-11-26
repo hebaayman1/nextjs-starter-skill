@@ -28,9 +28,9 @@ src/
 │   └── request.ts            # Loads messages/{locale}.json for each request
 ├── app/                      # Routing ONLY: pages, layouts, loading/error/not-found
 │   ├── layout.tsx            # Pass-through; the real root layout is [locale]/layout.tsx
-│   ├── providers.tsx         # Client providers (React Query + devtools)
+│   ├── providers.tsx         # Client providers (next-intl, React Query + devtools)
 │   └── [locale]/             # Every page sits under the locale segment
-│       ├── layout.tsx        # <html lang dir>, fonts, metadata, NextIntlClientProvider, <Providers>
+│       ├── layout.tsx        # <html lang dir>, fonts, metadata, <Providers> with locale + messages
 │       ├── (app)/            # Route group wrapped in <AppShell>; not in the URL
 │       └── design-system/    # Dev-only component gallery (404 in production)
 <!-- @i18n-end -->
@@ -128,6 +128,7 @@ The app speaks %%LANGUAGES%% through **next-intl**; nothing else is used for UI 
 - **Text:** add a key in the same place in every `messages/*.json` file, then use it. Group keys by namespace: one per feature, plus shared ones such as `errors`. Messages use ICU syntax: `{name}` for values, `{count, plural, one {# item} other {# items}}` for plurals; escape literal braces and angle brackets.
 - **Server components:** `const t = useTranslations("posts")` (or `await getTranslations(...)` in async code). Every page and layout under `[locale]` calls `setRequestLocale(locale)` first so it can render statically; `generateMetadata` uses `getTranslations({ locale, namespace })`.
 - **Client components:** `const { t, locale, isRTL } = useLanguage("posts")` from `@/hooks/use-language`, or `useTranslations` directly.
+- **Cache Components:** `[locale]/layout.tsx` passes `locale`, `messages`, and `timeZone` to `<Providers>`, which wraps the client `NextIntlClientProvider`. Do not render next-intl's server `NextIntlClientProvider` or call next-intl server APIs without a locale: they fall back to `headers()`, which fails prerendering. Files that receive no `params` (`not-found.tsx`, `error.tsx`) are client components that use `useTranslations`.
 - **Links and navigation:** import `Link`, `useRouter`, `usePathname`, `redirect` from `@/i18n/routing`, never from `next/link` or `next/navigation`, so the locale prefix stays in the URL. Its `usePathname()` returns the path without the locale.
 - **Right-to-left:** `[locale]/layout.tsx` sets `<html dir>` from `isRtlLocale`. Use logical utilities (`ms-*`, `me-*`, `ps-*`, `pe-*`, `start-*`, `end-*`, `border-s/e`, `text-start/end`) and the `rtl:` variant instead of left/right ones. Use `isRTL` only for what CSS cannot flip, like directional icons or chart axes.
 - **Numbers and dates:** pass the current `locale` to the helpers in `lib/format.ts`.

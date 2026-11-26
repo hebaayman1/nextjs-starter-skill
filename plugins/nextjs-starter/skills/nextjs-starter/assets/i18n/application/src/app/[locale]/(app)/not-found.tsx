@@ -1,3 +1,5 @@
+"use client"
+
 import { useTranslations } from "next-intl"
 import { buttonVariants } from "@/components/ui/button-variants"
 import { EmptyState } from "@/components/ui/empty-state"

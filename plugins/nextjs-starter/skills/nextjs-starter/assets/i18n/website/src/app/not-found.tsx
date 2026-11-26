@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { site } from "@/config/site"
 import "./globals.css"
 
@@ -7,7 +8,7 @@ export default function NotFound() {
     <html lang="%%DEFAULT_LOCALE%%" dir="%%DEFAULT_DIR%%">
       <body className="flex min-h-dvh flex-col items-center justify-center gap-4 p-8 text-center font-sans antialiased">
         <p className="text-4xl font-semibold">404</p>
-        <a href="/" className="text-accent underline">{site.name}</a>
+        <Link href="/" className="text-accent underline">{site.name}</Link>
       </body>
     </html>
   )

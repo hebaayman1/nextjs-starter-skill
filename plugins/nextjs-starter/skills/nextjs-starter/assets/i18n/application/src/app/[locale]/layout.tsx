@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
-import { hasLocale, NextIntlClientProvider } from "next-intl"
-import { getTranslations, setRequestLocale } from "next-intl/server"
+import { hasLocale } from "next-intl"
+import { getMessages, getTimeZone, getTranslations, setRequestLocale } from "next-intl/server"
 import type { ReactNode } from "react"
 import { direction, routing } from "@/i18n/routing"
 // @themes-start
@@ -30,6 +30,7 @@ export default async function LocaleLayout({ children, params }: Props) {
   const { locale } = await params
   if (!hasLocale(routing.locales, locale)) notFound()
   setRequestLocale(locale)
+  const [messages, timeZone] = await Promise.all([getMessages({ locale }), getTimeZone({ locale })])
 
   return (
     <html
@@ -47,10 +48,9 @@ export default async function LocaleLayout({ children, params }: Props) {
       </head>
       {/* @themes-end */}
       <body>
-        {/* Passes this locale's messages to client components. */}
-        <NextIntlClientProvider>
-          <Providers>{children}</Providers>
-        </NextIntlClientProvider>
+        <Providers locale={locale} messages={messages} timeZone={timeZone}>
+          {children}
+        </Providers>
       </body>
     </html>
   )
