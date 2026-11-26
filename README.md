@@ -153,3 +153,7 @@ plugins/nextjs-starter/
    cd /tmp/check-site && npm run lint && npm run typecheck && npm test && npm run build
    # repeat with --languages ar,en and --themes light,dark for both options when touching assets/i18n/ or assets/themes/
    ```
+
+## License
+
+[MIT](LICENSE)
